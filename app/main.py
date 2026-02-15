@@ -1,11 +1,8 @@
 import argparse
 import logging
 
-from app.camera import CameraMonitor
 from app.config import AppConfig
-from app.locker import MacLocker
-from app.recognition import FaceRecognizer
-from app.state_machine import Action, PresenceStateMachine
+from app.runtime import run_guard
 
 
 def parse_args() -> AppConfig:
@@ -41,51 +38,9 @@ def run() -> int:
     )
 
     config = parse_args()
-    locker = MacLocker(dry_run=config.dry_run)
-    recognizer = FaceRecognizer(config.embeddings_path, config.match_threshold)
-    state = PresenceStateMachine(config.lock_after_absence_seconds)
-
-    logging.info(
-        "Starting FaceRec Guard (fps=%.2f timeout=%.2fs dry_run=%s threshold=%.3f)",
-        config.target_fps,
-        config.lock_after_absence_seconds,
-        config.dry_run,
-        config.match_threshold,
-    )
 
     try:
-        with CameraMonitor(config) as camera:
-            for obs in camera.observe():
-                summary = recognizer.classify(obs.frame)
-                action = state.on_observation(
-                    authorized_present=summary.authorized_present,
-                    now=obs.timestamp,
-                )
-
-                status = (
-                    f"AUTHORIZED={summary.authorized_faces} "
-                    f"UNAUTHORIZED={summary.unauthorized_faces}"
-                )
-                logging.debug(status)
-
-                if config.show_preview:
-                    preview_status = (
-                        "AUTHORIZED PRESENT"
-                        if summary.authorized_present
-                        else "NO AUTHORIZED FACE"
-                    )
-                    camera.show_preview(obs.frame, preview_status)
-
-                if action == Action.LOCK:
-                    logging.warning(
-                        "No authorized face for %.2fs. Locking now.",
-                        config.lock_after_absence_seconds,
-                    )
-                    success = locker.lock()
-                    if not success:
-                        logging.error("Lock command failed")
-                        return 1
-                    logging.info("Lock command sent")
+        return run_guard(config)
     except KeyboardInterrupt:
         logging.info("Shutting down by user request")
     except Exception as exc:

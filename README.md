@@ -1,51 +1,73 @@
 # FaceRec Guard
 
-FaceRec Guard is a macOS-focused face-presence lock tool.
+FaceRec Guard is a macOS-focused face lock tool.
 It keeps your session active while an authorized face is visible and locks when no authorized face is present for a configured timeout.
 
 ## What is implemented
 
 - Face detection and recognition pipeline (`face_recognition` + OpenCV).
-- Policy: if at least one authorized face is present, session remains unlocked.
-- Edge-case policy supported: authorized + unauthorized in the same frame stays unlocked.
-- macOS lock action through `CGSession -suspend`.
-- Enrollment command that captures your face embeddings and saves them locally.
-- Unit-tested lock-state logic.
-- Nix flake dev environment.
-- Home Manager module for shell aliases and project environment variables.
+- Policy: at least one authorized face keeps the laptop unlocked.
+- Edge-case policy: authorized + unauthorized faces together still stay unlocked.
+- macOS lock action via `CGSession -suspend`.
+- Enrollment flow to store local authorized embedding data.
+- Minimal GUI app (`app.gui`) with Start/Stop and live status.
+- Homebrew cask scaffolding for distributing a `.dmg` GUI build.
+- Nix flake + Home Manager setup.
 
-## One-by-one implementation plan (kept sane)
+## Minimal GUI usage
 
-1. Baseline app modules
-- `app/main.py`, `app/camera.py`, `app/locker.py`, `app/state_machine.py`
-- Goal: detect presence and lock after timeout.
+Run directly:
 
-2. Identity-aware policy
-- `app/recognition.py`, `app/enroll.py`
-- Goal: distinguish authorized vs unauthorized faces.
+```bash
+python -m app.gui
+```
 
-3. Policy hardening
-- Lock on absence of authorized faces only.
-- Keep unlocked when authorized + unauthorized are both visible.
+GUI features:
 
-4. Reproducible environment
-- Add `flake.nix` dev shell with Python and required build/runtime tools.
+- Set timeout, FPS, threshold, embeddings path.
+- Dry-run toggle.
+- Start/Stop monitoring.
+- Live status (`AUTHORIZED` and `UNAUTHORIZED` counts).
 
-5. User environment automation
-- Add Home Manager module at `nix/home-manager/home.nix`.
-- Provide aliases (`facerec-dev`, `facerec-test`, `facerec-enroll`, `facerec-run`).
+## Homebrew cask support
 
-6. Documentation and operations
-- Expand README and AGENT docs.
-- Keep commands explicit and minimal.
+Cask files:
 
-## Requirements
+- `Casks/facerec-guard.rb` (tap-compatible location)
+- `packaging/homebrew/Casks/facerec-guard.rb` (packaging workspace copy)
 
-- macOS (Apple Silicon profile included in flake Home Manager config).
-- Nix with flakes enabled.
-- Camera permission enabled for terminal/python runtime.
+### Build a macOS app + DMG
 
-## Quick start with Nix flake
+```bash
+./scripts/build_macos_app.sh 0.1.0
+```
+
+This creates `dist/FaceRecGuard-0.1.0.dmg` and prints its SHA256.
+
+### Update cask metadata
+
+Edit `Casks/facerec-guard.rb`:
+
+- set `version`
+- set `sha256`
+- keep `url` pointing to your GitHub release asset
+
+Mirror the same change in `packaging/homebrew/Casks/facerec-guard.rb`.
+
+### Install locally from cask file
+
+```bash
+brew install --cask ./Casks/facerec-guard.rb
+```
+
+### Tap-based install (after publishing a tap repo)
+
+```bash
+brew tap ariz/facerec
+brew install --cask facerec-guard
+```
+
+## Nix quick start
 
 ```bash
 nix develop
@@ -54,21 +76,15 @@ python -m app.enroll --samples 12 --output data/authorized_faces.json
 python -m app.main --timeout 10 --fps 5 --embeddings data/authorized_faces.json --show-preview --dry-run
 ```
 
-Remove `--dry-run` to enable real locking.
-
 ## Home Manager setup
 
-The flake exports:
-
-- `homeConfigurations."ariz@facerec"`
-
-Apply it:
+Apply:
 
 ```bash
 home-manager switch --flake .#ariz@facerec
 ```
 
-After switch, these aliases are available in zsh:
+Aliases:
 
 - `facerec-dev`
 - `facerec-test`
@@ -86,31 +102,28 @@ python -m unittest discover -s tests -p "test_*.py"
 
 ## Project structure
 
-- `app/main.py`: app entrypoint and runtime loop.
+- `app/main.py`: CLI entrypoint.
+- `app/gui.py`: minimal desktop GUI.
+- `app/runtime.py`: shared runtime loop.
 - `app/camera.py`: frame ingestion.
 - `app/recognition.py`: authorized/unauthorized classification.
-- `app/state_machine.py`: lock decision state machine.
+- `app/state_machine.py`: lock policy state machine.
 - `app/locker.py`: macOS lock command wrapper.
 - `app/enroll.py`: enrollment workflow.
-- `tests/test_state_machine.py`: lock policy unit tests.
-- `flake.nix`: reproducible dev shell + Home Manager output.
+- `scripts/build_macos_app.sh`: app bundle + DMG build script.
+- `Casks/facerec-guard.rb`: Homebrew cask definition.
+- `flake.nix`: reproducible shell + Home Manager output.
 - `nix/home-manager/home.nix`: user shell/env integration.
 
 ## Security and operational notes
 
-- No cloud processing in this repo; embeddings stay local by default.
-- This app does not bypass macOS authentication.
-- Lock command uses user-space APIs only (`CGSession -suspend`).
-- Tune `--match-threshold` per environment to reduce false positives/negatives.
+- Embeddings are local by default.
+- No auto-unlock bypass; macOS auth remains required.
+- Uses user-space lock (`CGSession -suspend`).
+- Tune `--match-threshold` for your environment.
 
 ## Testing
 
 ```bash
 python -m unittest discover -s tests -p "test_*.py"
 ```
-
-## Known limitations
-
-- Lighting and camera angle can impact recognition quality.
-- Current tests focus on lock policy state logic, not camera integration.
-- Home Manager output currently targets `aarch64-darwin` for the configured profile.
