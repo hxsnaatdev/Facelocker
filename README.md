@@ -5,39 +5,21 @@ It keeps your session active while an authorized face is visible and locks when 
 
 ## What is implemented
 
-- Face detection and recognition pipeline (`face_recognition` + OpenCV).
-- Policy: if at least one authorized face is present, session remains unlocked.
-- Edge-case policy supported: authorized + unauthorized in the same frame stays unlocked.
+- Face detection and recognition pipeline (`face_recognition` + OpenCV)
 - macOS lock action through `CGSession -suspend`.
 - Enrollment command that captures your face embeddings and saves them locally.
 - Unit-tested lock-state logic.
 - Nix flake dev environment.
 - Home Manager module for shell aliases and project environment variables.
 
-## One-by-one implementation plan (kept sane)
 
-1. Baseline app modules
-- `app/main.py`, `app/camera.py`, `app/locker.py`, `app/state_machine.py`
-- Goal: detect presence and lock after timeout.
-
-2. Identity-aware policy
-- `app/recognition.py`, `app/enroll.py`
-- Goal: distinguish authorized vs unauthorized faces.
-
-3. Policy hardening
+Policy hardening
 - Lock on absence of authorized faces only.
 - Keep unlocked when authorized + unauthorized are both visible.
 
-4. Reproducible environment
+Reproducible environment
 - Add `flake.nix` dev shell with Python and required build/runtime tools.
 
-5. User environment automation
-- Add Home Manager module at `nix/home-manager/home.nix`.
-- Provide aliases (`facerec-dev`, `facerec-test`, `facerec-enroll`, `facerec-run`).
-
-6. Documentation and operations
-- Expand README and AGENT docs.
-- Keep commands explicit and minimal.
 
 ## Requirements
 
@@ -47,12 +29,12 @@ It keeps your session active while an authorized face is visible and locks when 
 
 ## Quick start with Nix flake
 
-```bash
+
 nix develop
 python -m unittest discover -s tests -p "test_*.py"
 python -m app.enroll --samples 12 --output data/authorized_faces.json
 python -m app.main --timeout 10 --fps 5 --embeddings data/authorized_faces.json --show-preview --dry-run
-```
+
 
 Remove `--dry-run` to enable real locking.
 
