@@ -5,46 +5,21 @@ It keeps your session active while an authorized face is visible and locks when 
 
 ## What is implemented
 
-- Face detection and recognition pipeline (`face_recognition` + OpenCV).
-- Policy: at least one authorized face keeps the laptop unlocked.
-- Edge-case policy: authorized + unauthorized faces together still stay unlocked.
-- macOS lock action via `CGSession -suspend`.
-- Enrollment flow to store local authorized embedding data.
-- Minimal GUI app (`app.gui`) with Start/Stop and live status.
-- Homebrew cask scaffolding for distributing a `.dmg` GUI build.
-- Nix flake + Home Manager setup.
+- Face detection and recognition pipeline (`face_recognition` + OpenCV)
+- macOS lock action through `CGSession -suspend`.
+- Enrollment command that captures your face embeddings and saves them locally.
+- Unit-tested lock-state logic.
+- Nix flake dev environment.
+- Home Manager module for shell aliases and project environment variables.
 
-## Minimal GUI usage
 
-Run directly:
+Policy hardening
+- Lock on absence of authorized faces only.
+- Keep unlocked when authorized + unauthorized are both visible.
 
-```bash
-python -m app.gui
-```
+Reproducible environment
+- Add `flake.nix` dev shell with Python and required build/runtime tools.
 
-GUI features:
-
-- Set timeout, FPS, threshold, embeddings path.
-- Dry-run toggle.
-- Start/Stop monitoring.
-- Live status (`AUTHORIZED` and `UNAUTHORIZED` counts).
-
-## Homebrew cask support
-
-Cask files:
-
-- `Casks/facerec-guard.rb` (tap-compatible location)
-- `packaging/homebrew/Casks/facerec-guard.rb` (packaging workspace copy)
-
-### Build a macOS app + DMG
-
-```bash
-./scripts/build_macos_app.sh 0.1.0
-```
-
-This creates `dist/FaceRecGuard-0.1.0.dmg` and prints its SHA256.
-
-### Update cask metadata
 
 Edit `Casks/facerec-guard.rb`:
 
@@ -69,12 +44,12 @@ brew install --cask facerec-guard
 
 ## Nix quick start
 
-```bash
+
 nix develop
 python -m unittest discover -s tests -p "test_*.py"
 python -m app.enroll --samples 12 --output data/authorized_faces.json
 python -m app.main --timeout 10 --fps 5 --embeddings data/authorized_faces.json --show-preview --dry-run
-```
+
 
 ## Home Manager setup
 
