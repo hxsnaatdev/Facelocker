@@ -70,15 +70,50 @@ python -m unittest discover -s tests -p "test_*.py"
 
 ## Project structure
 
-- `app/main.py`: CLI entrypoint.
-- `app/gui.py`: minimal desktop GUI.
-- `app/runtime.py`: shared runtime loop.
-- `app/camera.py`: frame ingestion.
-- `app/recognition.py`: authorized/unauthorized classification.
-- `app/state_machine.py`: lock policy state machine.
-- `app/locker.py`: macOS lock command wrapper.
-- `app/enroll.py`: enrollment workflow.
-- `scripts/build_macos_app.sh`: app bundle + DMG build script.
-- `Casks/facerec-guard.rb`: Homebrew cask definition.
-- `flake.nix`: reproducible shell + Home Manager output.
-- `nix/home-manager/home.nix`: user shell/env integration.
+Facelocker/
+├── .vscode/
+│   └── settings.json
+├── AGENT.md
+├── app/
+│   ├── __init__.py
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── camera.cpython-314.pyc
+│   │   ├── config.cpython-314.pyc
+│   │   ├── enroll.cpython-314.pyc
+│   │   ├── gui.cpython-314.pyc
+│   │   ├── locker.cpython-314.pyc
+│   │   ├── main.cpython-314.pyc
+│   │   ├── recognition.cpython-314.pyc
+│   │   ├── runtime.cpython-314.pyc
+│   │   └── state_machine.cpython-314.pyc
+│   ├── camera.py
+│   ├── config.py
+│   ├── enroll.py
+│   ├── gui.py
+│   ├── locker.py
+│   ├── main.py
+│   ├── recognition.py
+│   ├── runtime.py
+│   └── state_machine.py
+├── Casks/
+│   └── facerec-guard.rb
+├── flake.lock
+├── flake.nix
+├── launchd/
+│   └── com.facerec.guard.plist
+├── nix/
+│   └── home-manager/
+│       └── home.nix
+├── packaging/
+│   └── homebrew/
+│       └── Casks/
+│           └── facerec-guard.rb
+├── README.md
+├── requirements.txt
+├── scripts/
+│   └── build_macos_app.sh
+└── tests/
+    ├── __pycache__/
+    │   └── test_state_machine.cpython-314.pyc
+    └── test_state_machine.py
