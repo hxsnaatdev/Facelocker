@@ -21,13 +21,6 @@ Reproducible environment
 - Add `flake.nix` dev shell with Python and required build/runtime tools.
 
 
-Edit `Casks/facerec-guard.rb`:
-
-- set `version`
-- set `sha256`
-- keep `url` pointing to your GitHub release asset
-
-Mirror the same change in `packaging/homebrew/Casks/facerec-guard.rb`.
 
 ### Install locally from cask file
 
@@ -89,16 +82,3 @@ python -m unittest discover -s tests -p "test_*.py"
 - `Casks/facerec-guard.rb`: Homebrew cask definition.
 - `flake.nix`: reproducible shell + Home Manager output.
 - `nix/home-manager/home.nix`: user shell/env integration.
-
-## Security and operational notes
-
-- Embeddings are local by default.
-- No auto-unlock bypass; macOS auth remains required.
-- Uses user-space lock (`CGSession -suspend`).
-- Tune `--match-threshold` for your environment.
-
-## Testing
-
-```bash
-python -m unittest discover -s tests -p "test_*.py"
-```
